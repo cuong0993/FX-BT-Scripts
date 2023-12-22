@@ -114,10 +114,12 @@ class CSV(Input):
             # Storing timestamp as float to preserve its precision.
             # 'timestamp': time.mktime(datetime.datetime.strptime(tick[0], '%Y.%m.%d %H:%M:%S.%f').replace(tzinfo=datetime.timezone.utc).timetuple()),
             "timestamp": string_to_timestamp(tick[0]).timestamp(),
-            "bidPrice": float(tick[1]),
-            "askPrice": float(tick[2]),
-            "bidVolume": float(tick[3]),
-            "askVolume": float(tick[4]),  # float() handles ending '\n' character
+            "open": float(tick[1]),
+            "high": float(tick[2]),
+            "low": float(tick[3]),
+            "close": float(tick[4]),
+            "volume": float(tick[5]),  # float() handles ending '\n' character
+            # float() handles ending '\n' character
         }
 
 
@@ -284,28 +286,28 @@ class HST574(Output):
 
     def pack_ticks(self, ticks):
         # Transform universal bar list to binary bar data (60 Bytes per bar)
-        ticksAggregated = {
-            "barTimestamp": ticks[0]["timestamp"],
-            "tickTimestamp": ticks[0]["timestamp"],
-            "open": ticks[0]["bidPrice"],
-            "low": ticks[0]["bidPrice"],
-            "high": ticks[0]["bidPrice"],
-            "close": ticks[0]["bidPrice"],
-            "volume": 0,
-        }
+        # ticksAggregated = {
+        #     "barTimestamp": ticks[0]["timestamp"],
+        #     "tickTimestamp": ticks[0]["timestamp"],
+        #     "open": ticks[0]["bidPrice"],
+        #     "low": ticks[0]["bidPrice"],
+        #     "high": ticks[0]["bidPrice"],
+        #     "close": ticks[0]["bidPrice"],
+        #     "volume": 0,
+        # }
+        #
+        # for tick in ticks:
+        #     ticksAggregated["low"] = min(ticksAggregated["low"], tick["bidPrice"])
+        #     ticksAggregated["high"] = max(ticksAggregated["high"], tick["bidPrice"])
+        #     ticksAggregated["volume"] += tick["bidVolume"] + tick["askVolume"]
+        #
+        # ticksAggregated["close"] = tick["bidPrice"]
 
-        for tick in ticks:
-            ticksAggregated["low"] = min(ticksAggregated["low"], tick["bidPrice"])
-            ticksAggregated["high"] = max(ticksAggregated["high"], tick["bidPrice"])
-            ticksAggregated["volume"] += tick["bidVolume"] + tick["askVolume"]
-
-        ticksAggregated["close"] = tick["bidPrice"]
-
-        self.path.write(self._packUniBar(ticksAggregated))
+        self.path.write(self._packUniBar(ticks[0]))
 
     def _packUniBar(self, uniBar):
         bar = bytearray()
-        bar += pack("<i", uniBar["barTimestamp"])  # Time
+        bar += pack("<i", uniBar["timestamp"])  # Time
         bar += bytearray(4)  # Add 4 bytes of padding.
         # OHLCV values.
         bar += pack("<d", uniBar["open"])  # Open
